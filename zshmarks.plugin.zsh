@@ -7,19 +7,12 @@
 
 # Set BOOKMARKS_FILE if it doesn't exist to the default.
 # Allows for a user-configured BOOKMARKS_FILE.
-if [[ -z $BOOKMARKS_FILE ]] ; then
-	export BOOKMARKS_FILE="$HOME/.bookmarks"
-fi
-
-# Check if $BOOKMARKS_FILE is a symlink.
-if [[ -L $BOOKMARKS_FILE ]]; then
-  BOOKMARKS_FILE=$(readlink $BOOKMARKS_FILE)
-fi
+BOOKMARKS_FILE="${BOOKMARKS_FILE:-$HOME/.bookmarks}"
+BOOKMARKS_FILE="${BOOKMARKS_FILE:A}"
+export BOOKMARKS_FILE
 
 # Create bookmarks_file it if it doesn't exist
-if [[ ! -f $BOOKMARKS_FILE ]]; then
-	touch $BOOKMARKS_FILE
-fi
+[[ -f $BOOKMARKS_FILE ]] || touch "$BOOKMARKS_FILE"
 
 __zshmarks_move_to_trash() {
   if [[ $(uname) == "Linux"* || $(uname) == "FreeBSD"*  ]]; then
