@@ -21,7 +21,7 @@ if [[ ! -f $BOOKMARKS_FILE ]]; then
 	touch $BOOKMARKS_FILE
 fi
 
-_zshmarks_move_to_trash(){
+__zshmarks_move_to_trash() {
   if [[ $(uname) == "Linux"* || $(uname) == "FreeBSD"*  ]]; then
     label=`date +%s`
     mkdir -p ~/.local/share/Trash/info ~/.local/share/Trash/files
@@ -37,56 +37,56 @@ DeletionDate="`date +"%Y-%m-%dT%H:%M:%S"`"
   fi
 }
 
-function bookmark() {
-	local bookmark_name=$1
-	if [[ -z $bookmark_name ]]; then
-        bookmark_name="${PWD##*/}"
+__zshmarks_zgrep() {
+  local outvar="$1"; shift
+  local pattern="$1"
+  local filename="$2"
+  local file_contents="$(<"$filename")"
+  local file_lines; file_lines=(${(f)file_contents})
+  for line in "${file_lines[@]}"; do
+    if [[ "$line" =~ "$pattern" ]]; then
+      eval "$outvar=\"$line\""
+      return 0
     fi
-    cur_dir="$(pwd)"
-    # Replace /home/uname with $HOME
-    if [[ "$cur_dir" =~ ^"$HOME"(/|$) ]]; then
-        cur_dir="\$HOME${cur_dir#$HOME}"
-    fi
-    # Store the bookmark as folder|name
-    bookmark="$cur_dir|$bookmark_name"
-    if [[ -z $(grep "$bookmark" $BOOKMARKS_FILE 2>/dev/null) ]]; then
-        echo $bookmark >> $BOOKMARKS_FILE
-        echo "Bookmark '$bookmark_name' saved"
-    else
-        echo "Bookmark already existed"
-        return 1
-    fi
+  done
+  return 1
 }
 
-__zshmarks_zgrep() {
-	local outvar="$1"; shift
-	local pattern="$1"
-	local filename="$2"
-	local file_contents="$(<"$filename")"
-	local file_lines; file_lines=(${(f)file_contents})
-	for line in "${file_lines[@]}"; do
-		if [[ "$line" =~ "$pattern" ]]; then
-			eval "$outvar=\"$line\""
-			return 0
-		fi
-	done
-	return 1
+function bookmark() {
+  local bookmark_name=$1
+  if [[ -z $bookmark_name ]]; then
+    bookmark_name="${PWD##*/}"
+  fi
+  cur_dir="$(pwd)"
+  # Replace /home/uname with $HOME
+  if [[ "$cur_dir" =~ ^"$HOME"(/|$) ]]; then
+    cur_dir="\$HOME${cur_dir#$HOME}"
+  fi
+  # Store the bookmark as folder|name
+  bookmark="$cur_dir|$bookmark_name"
+  if [[ -z $(grep "$bookmark" $BOOKMARKS_FILE 2>/dev/null) ]]; then
+    echo $bookmark >> $BOOKMARKS_FILE
+    echo "Bookmark '$bookmark_name' saved"
+  else
+    echo "Bookmark already existed"
+    return 1
+  fi
 }
 
 function jump() {
-	local bookmark_name=$1
-	local bookmark
-	if ! __zshmarks_zgrep bookmark "\\|$bookmark_name\$" "$BOOKMARKS_FILE"; then
-		echo "Invalid name, please provide a valid bookmark name. For example:"
-		echo "  jump foo"
-		echo
-		echo "To bookmark a folder, go to the folder then do this (naming the bookmark 'foo'):"
-		echo "  bookmark foo"
-		return 1
-	else
-		local dir="${bookmark%%|*}"
-		eval "cd \"${dir}\""
-	fi
+  local bookmark_name=$1
+  local bookmark
+  if ! __zshmarks_zgrep bookmark "\\|$bookmark_name\$" "$BOOKMARKS_FILE"; then
+    echo "Invalid name, please provide a valid bookmark name. For example:"
+    echo "  jump foo"
+    echo
+    echo "To bookmark a folder, go to the folder then do this (naming the bookmark 'foo'):"
+    echo "  bookmark foo"
+    return 1
+  else
+    local dir="${bookmark%%|*}"
+    eval "cd \"${dir}\""
+  fi
 }
 
 # Show a list of the bookmarks
@@ -111,7 +111,7 @@ function showmarks() {
 }
 
 # Delete a bookmark
-function deletemark()  {
+function deletemark() {
   local bookmark_name=$1
   if [[ -z $bookmark_name ]]; then
     printf "%s \n" "Please provide a name for your bookmark to delete. For example:"
@@ -129,8 +129,7 @@ function deletemark()  {
       bookmark_line=${bookmark_array[(r)$bookmark_search]}
       bookmark_array=(${bookmark_array[@]/$bookmark_line})
       eval "printf '%s\n' \"\${bookmark_array[@]}\"" >! $BOOKMARKS_FILE
-      _zshmarks_move_to_trash
+      __zshmarks_move_to_trash
     fi
-	fi
+  fi
 }
-
